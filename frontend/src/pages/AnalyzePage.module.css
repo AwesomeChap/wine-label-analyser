@@ -1,0 +1,256 @@
+.page {
+  width: 100%;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 2rem 0;
+  font-size: 0.95rem;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .slots {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+  .subtitle {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.35rem;
+  }
+  .analyzeRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .analyzeBtn {
+    min-height: 48px;
+    width: 100%;
+  }
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.slotLabel {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.preview {
+  position: relative;
+  aspect-ratio: 3/4;
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.previewDragOver {
+  border-color: var(--accent);
+  background: rgba(196, 165, 116, 0.08);
+}
+
+.preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.placeholder {
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+.placeholder > span:first-child {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.placeholderHint {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.clearBtn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.clearBtn:hover {
+  background: rgba(0,0,0,0.8);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions button {
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.actions button:hover {
+  background: var(--border);
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-wrap: wrap;
+  }
+  .actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background: rgba(180, 80, 80, 0.15);
+  border: 1px solid rgba(180, 80, 80, 0.4);
+  border-radius: var(--radius);
+  color: #e8a0a0;
+  margin-bottom: 1rem;
+}
+
+.analyzeRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.analyzeBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.analyzeBtn:hover:not(:disabled) {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+.analyzeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.result h2 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+}
+
+.dl {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+@media (max-width: 480px) {
+  .result {
+    padding: 1rem;
+  }
+  .row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .row dt {
+    margin-top: 0.5rem;
+  }
+  .row dt:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.row dt {
+  margin: 0;
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.row dd {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.saved {
+  margin: 1rem 0 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--success);
+  font-size: 0.9rem;
+}

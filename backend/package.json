@@ -1,0 +1,17 @@
+{
+  "name": "wine-label-analyser-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "openai": "^4.52.0",
+    "sharp": "^0.33.5",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
