@@ -20,10 +20,10 @@ function Line({ label, value, preWrap }) {
   const v = value?.trim();
   const usePreWrap = preWrap ?? (label === 'Extracted text' || label === 'Extraction prompt');
   return (
-    <div className="grid grid-cols-[120px_1fr] gap-2 items-start text-sm sm:grid-cols-1 sm:gap-0.5">
+    <div className="grid grid-cols-1 gap-0.5 sm:gap-2 text-sm items-start min-w-0">
       <span className="text-muted/90 shrink-0 text-xs font-medium uppercase tracking-wider">{label}</span>
       <span
-        className={`text-[#f5f0eb] break-words ${usePreWrap ? 'whitespace-pre-wrap text-[0.85rem] leading-relaxed' : ''}`}
+        className={`min-w-0 text-[#f5f0eb] break-words ${usePreWrap ? 'whitespace-pre-wrap text-[0.85rem] leading-relaxed' : ''}`}
       >
         {v || '—'}
       </span>
@@ -33,9 +33,9 @@ function Line({ label, value, preWrap }) {
 
 function SkeletonLine({ label }) {
   return (
-    <div className="grid grid-cols-[120px_1fr] gap-2 items-center text-sm sm:grid-cols-1 sm:gap-1">
+    <div className="grid grid-cols-1 gap-0.5 sm:gap-2 text-sm items-center min-w-0">
       <span className="text-muted/90 shrink-0 text-xs font-medium uppercase tracking-wider">{label}</span>
-      <span className="h-4 w-full max-w-[200px] rounded bg-white/10 animate-pulse" aria-hidden />
+      <span className="h-4 w-full min-w-0 max-w-[200px] rounded bg-white/10 animate-pulse" aria-hidden />
     </div>
   );
 }
@@ -219,7 +219,7 @@ export function HistoryPage() {
                 }}
                 aria-expanded={isExpanded}
               >
-                <div className="flex items-center gap-3 px-4 py-2 sm:px-5 text-sm min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-2 sm:px-5 text-sm min-w-0">
                   {reAnalyzingId === item.id ? (
                     <span className="flex-1 min-w-0 h-4 rounded bg-white/10 animate-pulse" aria-hidden />
                   ) : (
@@ -261,14 +261,14 @@ export function HistoryPage() {
                 </div>
                 {isExpanded && (
                   <div
-                    className="px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4 relative cursor-default"
+                    className={`min-w-0 px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4 relative cursor-default ${(item.frontImageUrl || item.backImageUrl) ? 'pt-10 sm:pt-4' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => e.stopPropagation()}
                   >
                     {(item.frontImageUrl || item.backImageUrl) && (
                       <button
                         type="button"
-                        className="absolute top-4 right-4 sm:top-4 sm:right-5 z-10 px-3 py-1.5 rounded-lg text-xs font-medium text-muted bg-white/5 border border-white/10 hover:bg-white/10 hover:text-[#f5f0eb] transition-colors"
+                        className="absolute top-3 right-3 sm:top-4 sm:right-5 z-10 px-3 py-1.5 rounded-lg text-xs font-medium text-muted bg-white/5 border border-white/10 hover:bg-white/10 hover:text-[#f5f0eb] transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
                           setViewingImagesId(item.id);
@@ -294,14 +294,14 @@ export function HistoryPage() {
                           <Line key={key} label={label} value={item.data?.[key]} />
                         ))}
                         {editingPromptId === item.id ? (
-                      <div className="grid grid-cols-[120px_1fr] gap-3 items-start text-sm sm:grid-cols-1 sm:gap-1">
+                      <div className="grid grid-cols-1 gap-1 sm:gap-3 items-start text-sm min-w-0">
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-muted/90 text-xs font-medium uppercase tracking-wider">
                             Extraction prompt
                           </span>
                           <button
                             type="button"
-                            className="p-1 rounded text-muted/80 hover:text-[#f5f0eb] hover:bg-white/5 transition-colors"
+                            className="p-1 rounded text-muted/80 hover:text-[#f5f0eb] hover:bg-white/5 transition-colors shrink-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingPromptId(null);
@@ -316,7 +316,7 @@ export function HistoryPage() {
                             </svg>
                           </button>
                         </div>
-                        <div className="flex flex-col gap-4 min-w-0">
+                        <div className="flex flex-col gap-4 min-w-0 w-full">
                           <textarea
                             value={editedPrompt}
                             onChange={(e) => setEditedPrompt(e.target.value)}
@@ -329,14 +329,14 @@ export function HistoryPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-[120px_1fr] gap-3 items-start text-sm sm:grid-cols-1 sm:gap-1">
+                      <div className="grid grid-cols-1 gap-1 sm:gap-3 items-start text-sm min-w-0">
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-muted/90 text-xs font-medium uppercase tracking-wider">
                             Extraction prompt
                           </span>
                           <button
                             type="button"
-                            className="p-1 rounded text-muted/80 hover:text-accent hover:bg-white/5 transition-colors"
+                            className="p-1 rounded text-muted/80 hover:text-accent hover:bg-white/5 transition-colors shrink-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingPromptId(item.id);
