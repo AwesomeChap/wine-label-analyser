@@ -12,14 +12,6 @@ const KEY_FIELDS = [
 
 const ALL_FIELDS = [...KEY_FIELDS, { key: 'DecodedText', label: 'Decoded text' }];
 
-function formatDate(iso) {
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
-  } catch {
-    return iso || '—';
-  }
-}
-
 function getExtractedCount(data) {
   return KEY_FIELDS.filter((f) => data?.[f.key]?.trim()).length;
 }
@@ -228,19 +220,24 @@ export function HistoryPage() {
                 aria-expanded={isExpanded}
               >
                 <div className="flex items-center gap-3 px-4 py-2 sm:px-5 text-sm min-w-0">
-                  <span className="font-semibold text-[#f5f0eb] max-w-[140px] sm:max-w-[100px] truncate shrink-0">
-                    {item.data?.Name?.trim() || 'Unnamed'}
-                  </span>
-                  <span className="flex-1 min-w-0 truncate text-muted/90 text-[0.9rem]">{overview || '—'}</span>
-                  <span className="text-[0.7rem] px-2 py-0.5 rounded-md bg-white/10 text-muted shrink-0 font-medium">
-                    {count}/6
-                  </span>
-                  <span className="text-muted/80 text-xs shrink-0">{formatDate(item.created_at)}</span>
+                  {reAnalyzingId === item.id ? (
+                    <span className="flex-1 min-w-0 h-4 rounded bg-white/10 animate-pulse" aria-hidden />
+                  ) : (
+                    <>
+                      <span className="font-semibold text-[#f5f0eb] max-w-[140px] sm:max-w-[100px] truncate shrink-0">
+                        {item.data?.Name?.trim() || 'Unnamed'}
+                      </span>
+                      <span className="flex-1 min-w-0 truncate text-muted/90 text-[0.9rem]">{overview || '—'}</span>
+                      <span className="text-[0.7rem] px-2 py-0.5 rounded-md bg-white/10 text-muted shrink-0 font-medium">
+                        {count}/6
+                      </span>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="w-7 h-7 rounded-lg border-0 bg-transparent text-muted/80 hover:text-error hover:bg-red-500/10 flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={(e) => handleDeleteOne(e, item.id)}
-                    disabled={!!deletingId}
+                    disabled={!!deletingId || reAnalyzingId === item.id}
                     title="Delete"
                     aria-label="Delete this wine"
                   >
