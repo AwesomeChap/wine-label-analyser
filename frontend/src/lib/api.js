@@ -1,10 +1,17 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
+/** Fallback when API fails (e.g. serverless cold start or 404); must match backend DEFAULT_EXTRACTION_PROMPT. */
+export const FALLBACK_DEFAULT_PROMPT = `You are a wine label expert. Analyze the TWO images provided: the first is the FRONT label of a wine bottle, the second is the BACK label. Extract the structured fields (Name, Winery, Vintage, Grape Variety, Vineyard Location, Country). Also provide DecodedText: the main text content read from both labels combined, in reading order (front then back), as it appears on the labels. Use empty string "" if not found. Return valid JSON with keys: Name, Winery, Vintage, Grape Variety, Vineyard Location, Country, DecodedText.`;
+
 export async function getDefaultPrompt() {
-  const res = await fetch(`${API_BASE}/api/analyze/prompt`);
-  if (!res.ok) throw new Error('Failed to load default prompt');
-  const data = await res.json();
-  return data.prompt ?? '';
+  try {
+    const res = await fetch(`${API_BASE}/api/analyze/prompt`);
+    if (!res.ok) return FALLBACK_DEFAULT_PROMPT;
+    const data = await res.json();
+    return data.prompt ?? FALLBACK_DEFAULT_PROMPT;
+  } catch {
+    return FALLBACK_DEFAULT_PROMPT;
+  }
 }
 
 export async function analyzeLabels(frontBase64, backBase64, prompt) {
