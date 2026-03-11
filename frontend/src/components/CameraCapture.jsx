@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
+const MODAL_DURATION_MS = 200;
+
 /**
  * Renders a modal with live camera feed. On "Take photo", captures frame and calls onCapture(blob).
  */
@@ -7,6 +9,18 @@ export function CameraCapture({ onCapture, onClose }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [error, setError] = useState(null);
+  const [mounted, setMounted] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(onClose, MODAL_DURATION_MS);
+  };
 
   useEffect(() => {
     let stream = null;
@@ -37,20 +51,26 @@ export function CameraCapture({ onCapture, onClose }) {
     canvas.toBlob(
       (blob) => {
         if (blob) onCapture(blob);
-        onClose();
+        handleClose();
       },
       'image/jpeg',
       0.9
     );
   };
 
+  const overlayVisible = mounted && !closing;
+
   return (
     <div
-      className="fixed inset-0 bg-black/75 flex items-center justify-center z-[1000] p-4"
-      onClick={onClose}
+      className={`fixed inset-0 flex items-center justify-center z-[1000] p-4 bg-black/40 transition-all duration-200 ease-out ${
+        overlayVisible ? 'opacity-100 backdrop-blur-sm' : 'opacity-0 backdrop-blur-none'
+      } ${closing ? 'pointer-events-none' : ''}`}
+      onClick={handleClose}
     >
       <div
-        className="bg-surface border border-border rounded-xl max-w-[400px] w-full max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden"
+        className={`bg-surface border border-border rounded-xl max-w-[400px] w-full max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden transition-all duration-200 ease-out ${
+          overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -58,7 +78,7 @@ export function CameraCapture({ onCapture, onClose }) {
           <button
             type="button"
             className="w-11 h-11 flex items-center justify-center text-muted hover:text-[#f5f0eb] text-2xl leading-none p-2 border-0 bg-transparent cursor-pointer"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
           >
             ×

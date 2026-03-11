@@ -45,6 +45,10 @@ export function HistoryPage() {
   const [error, setError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [viewingImagesId, setViewingImagesId] = useState(null);
+  const [imagesModalClosing, setImagesModalClosing] = useState(false);
+  const [imagesModalMounted, setImagesModalMounted] = useState(false);
+  const IMAGES_MODAL_DURATION_MS = 200;
 
   const loadHistory = () => {
     getHistory()
@@ -56,6 +60,22 @@ export function HistoryPage() {
   useEffect(() => {
     loadHistory();
   }, []);
+
+  useEffect(() => {
+    if (viewingImagesId) {
+      const t = requestAnimationFrame(() => setImagesModalMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setImagesModalMounted(false);
+  }, [viewingImagesId]);
+
+  const closeImagesModal = () => {
+    setImagesModalClosing(true);
+    setTimeout(() => {
+      setViewingImagesId(null);
+      setImagesModalClosing(false);
+    }, IMAGES_MODAL_DURATION_MS);
+  };
 
   const handleDeleteOne = async (e, id) => {
     e.stopPropagation();
@@ -198,7 +218,20 @@ export function HistoryPage() {
                   </span>
                 </div>
                 {isExpanded && (
-                  <div className="px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4">
+                  <div className="px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4 relative">
+                    {(item.frontImageUrl || item.backImageUrl) && (
+                      <button
+                        type="button"
+                        className="absolute top-4 right-4 sm:top-4 sm:right-5 z-10 px-3 py-1.5 rounded-lg text-xs font-medium text-muted bg-white/5 border border-white/10 hover:bg-white/10 hover:text-[#f5f0eb] transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewingImagesId(item.id);
+                        }}
+                        aria-label="View label images"
+                      >
+                        View images
+                      </button>
+                    )}
                     {ALL_FIELDS.map(({ key, label }) => (
                       <Line key={key} label={label} value={item.data?.[key]} />
                     ))}
@@ -210,6 +243,57 @@ export function HistoryPage() {
           })}
         </ul>
       )}
+
+      {viewingImagesId && (() => {
+        const item = items.find((i) => i.id === viewingImagesId);
+        const hasImages = item?.frontImageUrl || item?.backImageUrl;
+        const overlayVisible = imagesModalMounted && !imagesModalClosing;
+        return (
+          <div
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 transition-all duration-200 ease-out ${
+              overlayVisible ? 'opacity-100 backdrop-blur-sm' : 'opacity-0 backdrop-blur-none'
+            } ${imagesModalClosing ? 'pointer-events-none' : ''}`}
+            onClick={closeImagesModal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Label images"
+          >
+            <div
+              className={`flex flex-col sm:flex-row gap-4 max-w-4xl w-full max-h-[90vh] overflow-auto transition-all duration-200 ease-out ${
+                overlayVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {hasImages ? (
+                <>
+                  {item.frontImageUrl && (
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted/90">Front label</span>
+                      <img
+                        src={item.frontImageUrl}
+                        alt="Front label"
+                        className="w-full h-auto object-contain rounded-xl border border-white/10 max-h-[70vh]"
+                      />
+                    </div>
+                  )}
+                  {item.backImageUrl && (
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
+                      <span className="text-xs font-medium uppercase tracking-wider text-muted/90">Back label</span>
+                      <img
+                        src={item.backImageUrl}
+                        alt="Back label"
+                        className="w-full h-auto object-contain rounded-xl border border-white/10 max-h-[70vh]"
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted text-sm">No images available.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

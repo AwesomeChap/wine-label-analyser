@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+
+const MODAL_DURATION_MS = 200;
 import { analyzeLabels, getDefaultPrompt } from '../lib/api';
 import { compressAndToBase64 } from '../lib/compress';
 import { CameraCapture } from '../components/CameraCapture';
@@ -32,6 +34,8 @@ export function AnalyzePage() {
   const [promptText, setPromptText] = useState('');
   const [defaultPrompt, setDefaultPrompt] = useState('');
   const [showPromptEditor, setShowPromptEditor] = useState(false);
+  const [promptModalClosing, setPromptModalClosing] = useState(false);
+  const [promptModalMounted, setPromptModalMounted] = useState(false);
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -46,8 +50,33 @@ export function AnalyzePage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (showPromptEditor) {
+      const t = requestAnimationFrame(() => setPromptModalMounted(true));
+      return () => cancelAnimationFrame(t);
+    }
+    setPromptModalMounted(false);
+  }, [showPromptEditor]);
+
+  const closePromptModal = () => {
+    setPromptModalClosing(true);
+    setTimeout(() => {
+      setShowPromptEditor(false);
+      setPromptModalClosing(false);
+    }, MODAL_DURATION_MS);
+  };
+
   const canAnalyze = frontImage && backImage && !loading;
   const canBatchAnalyze = batchPairs.length > 0 && !loading && !batchProgress;
+  const canRunAnyAnalyse = canAnalyze || canBatchAnalyze;
+  const isAnalysing = loading || batchProgress;
+  const analyseButtonLabel = batchProgress
+    ? `Analysing ${batchProgress.current}/${batchProgress.total}…`
+    : loading
+      ? 'Analysing…'
+      : batchPairs.length > 0
+        ? `Analyse all (${batchPairs.length})`
+        : 'Analyse labels';
 
   const getFirstImageFile = (files) => {
     if (!files?.length) return null;
@@ -398,16 +427,58 @@ export function AnalyzePage() {
         </div>
       </section>
 
-      <section className="mb-6">
-        <button
-          type="button"
-          className="px-4 py-2.5 rounded-xl border border-accent/50 bg-accent/10 text-accent font-medium text-sm hover:bg-accent/15 hover:border-accent/70 transition-colors"
-          onClick={() => setShowPromptEditor((v) => !v)}
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-error text-sm">
+          {error}
+        </div>
+      )}
+
+      <section className="mb-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className="px-4 py-2.5 rounded-xl border border-accent/50 bg-accent/10 text-accent font-medium text-sm hover:bg-accent/15 hover:border-accent/70 transition-colors"
+            onClick={() => setShowPromptEditor(true)}
+          >
+            Edit extraction prompt
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2.5 rounded-xl bg-accent text-bg font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-accent-dim hover:enabled:text-[#f5f0eb] transition-colors shadow-lg shadow-accent/20"
+            disabled={!canRunAnyAnalyse || isAnalysing}
+            onClick={() => {
+              if (isAnalysing) return;
+              if (batchPairs.length > 0) runBatchAnalysis();
+              else runAnalysis();
+            }}
+          >
+            {analyseButtonLabel}
+          </button>
+          {!canRunAnyAnalyse && (
+            <span className="text-muted text-sm">Add images above, then run analysis.</span>
+          )}
+        </div>
+      </section>
+
+      {(showPromptEditor || promptModalClosing) && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 transition-all duration-200 ease-out ${
+            promptModalMounted && !promptModalClosing ? 'opacity-100 backdrop-blur-sm' : 'opacity-0 backdrop-blur-none'
+          } ${promptModalClosing ? 'pointer-events-none' : ''}`}
+          onClick={closePromptModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="prompt-modal-title"
         >
-          {showPromptEditor ? 'Hide prompt' : 'Edit extraction prompt'}
-        </button>
-        {showPromptEditor && (
-          <div className="mt-3 p-5 rounded-2xl border border-white/5 bg-surface/60">
+          <div
+            className={`w-full max-w-lg p-5 rounded-2xl border border-white/10 bg-surface shadow-xl transition-all duration-200 ease-out ${
+              promptModalMounted && !promptModalClosing ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="prompt-modal-title" className="font-serif text-lg font-semibold text-[#f5f0eb] mb-2">
+              Edit extraction prompt
+            </h2>
             <p className="text-muted text-sm mb-3 leading-relaxed">
               This prompt is sent with the two images. The model must still return the same JSON fields (Name, Winery, Vintage, etc.).
             </p>
@@ -419,7 +490,7 @@ export function AnalyzePage() {
               placeholder="Extraction prompt..."
               spellCheck={false}
             />
-            <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 mt-4">
               <button
                 type="button"
                 className="px-4 py-2 text-sm rounded-lg border border-white/10 bg-white/5 text-muted hover:bg-white/10 hover:text-[#f5f0eb] transition-colors"
@@ -430,48 +501,14 @@ export function AnalyzePage() {
               <button
                 type="button"
                 className="px-4 py-2 text-sm rounded-lg border border-white/10 bg-white/5 text-muted hover:bg-white/10 hover:text-[#f5f0eb] transition-colors"
-                onClick={() => setShowPromptEditor(false)}
+                onClick={closePromptModal}
               >
                 Close
               </button>
             </div>
           </div>
-        )}
-      </section>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-error text-sm">
-          {error}
         </div>
       )}
-
-      <section className="mb-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className="px-8 py-3.5 rounded-xl bg-accent text-bg font-semibold text-base disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-accent-dim hover:enabled:text-[#f5f0eb] transition-colors shadow-lg shadow-accent/20"
-            disabled={!canAnalyze || !!batchProgress}
-            onClick={runAnalysis}
-          >
-            {loading && !batchProgress ? 'Analysing…' : 'Analyse labels'}
-          </button>
-          {batchPairs.length > 0 && (
-            <button
-              type="button"
-              className="px-6 py-3.5 rounded-xl bg-white/10 text-[#f5f0eb] font-semibold text-sm border border-white/20 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-white/15 transition-colors"
-              disabled={!canBatchAnalyze || !!loading}
-              onClick={runBatchAnalysis}
-            >
-              {batchProgress
-                ? `Analysing ${batchProgress.current}/${batchProgress.total}…`
-                : `Analyse all (${batchPairs.length})`}
-            </button>
-          )}
-          {!canAnalyze && batchPairs.length === 0 && (
-            <span className="text-muted text-sm">Add images above, then run analysis.</span>
-          )}
-        </div>
-      </section>
 
       {cameraSlot && (
         <CameraCapture onCapture={onCameraCapture} onClose={() => setCameraSlot(null)} />
