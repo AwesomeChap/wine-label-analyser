@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getHistory, deleteWine, deleteAllWines } from '../lib/api';
-import styles from './HistoryPage.module.css';
 
 const KEY_FIELDS = [
   { key: 'Name', label: 'Name' },
@@ -27,18 +26,15 @@ function getExtractedCount(data) {
 
 function Line({ label, value }) {
   const v = value?.trim();
-  if (label === 'Decoded text') {
-    return (
-      <div className={styles.line}>
-        <span className={styles.lineLabel}>{label}</span>
-        <span className={styles.lineValueDecoded}>{v || '—'}</span>
-      </div>
-    );
-  }
+  const isDecoded = label === 'Decoded text';
   return (
-    <div className={styles.line}>
-      <span className={styles.lineLabel}>{label}</span>
-      <span className={styles.lineValue}>{v || '—'}</span>
+    <div className="grid grid-cols-[120px_1fr] gap-2 items-start text-sm sm:grid-cols-[1fr] sm:gap-0.5">
+      <span className="text-muted shrink-0">{label}</span>
+      <span
+        className={`text-[#f5f0eb] break-words ${isDecoded ? 'whitespace-pre-wrap text-[0.85rem] leading-snug' : ''}`}
+      >
+        {v || '—'}
+      </span>
     </div>
   );
 }
@@ -92,33 +88,33 @@ export function HistoryPage() {
 
   if (loading) {
     return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>History</h1>
-        <p className={styles.muted}>Loading…</p>
+      <div className="w-full">
+        <h1 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">History</h1>
+        <p className="text-muted">Loading…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>History</h1>
-        <div className={styles.error}>{error}</div>
+      <div className="w-full">
+        <h1 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">History</h1>
+        <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/10 text-error">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.pageHead}>
+    <div className="w-full">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
         <div>
-          <h1 className={styles.title}>History</h1>
-          <p className={styles.subtitle}>Analysed wine bottles. Click a card to expand.</p>
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold mb-1">History</h1>
+          <p className="text-muted text-sm sm:text-base mb-0">Analysed wine bottles. Click a card to expand.</p>
         </div>
         {items.length > 0 && (
           <button
             type="button"
-            className={styles.deleteAllBtn}
+            className="px-3 py-1.5 text-sm rounded-lg border border-border bg-transparent text-muted cursor-pointer hover:text-error hover:border-red-500/40 disabled:opacity-70 disabled:cursor-not-allowed shrink-0"
             onClick={handleDeleteAll}
             disabled={!!deletingId}
           >
@@ -128,9 +124,9 @@ export function HistoryPage() {
       </div>
 
       {items.length === 0 ? (
-        <p className={styles.empty}>No analyses yet. Analyse a label on the Analyse page.</p>
+        <p className="text-muted text-sm">No analyses yet. Analyse a label on the Analyse page.</p>
       ) : (
-        <ul className={styles.list}>
+        <ul className="list-none p-0 m-0 flex flex-col gap-3">
           {items.map((item) => {
             const isExpanded = expandedId === item.id;
             const count = getExtractedCount(item.data);
@@ -140,7 +136,7 @@ export function HistoryPage() {
             return (
               <li
                 key={item.id}
-                className={`${styles.card} ${isExpanded ? styles.cardExpanded : ''}`}
+                className={`bg-surface border rounded-xl px-4 py-3 sm:px-5 cursor-pointer transition-colors min-h-[44px] hover:border-accent-dim ${isExpanded ? 'border-accent-dim' : 'border-border'}`}
                 onClick={() => setExpandedId(isExpanded ? null : item.id)}
                 role="button"
                 tabIndex={0}
@@ -152,14 +148,16 @@ export function HistoryPage() {
                 }}
                 aria-expanded={isExpanded}
               >
-                <div className={styles.cardRow}>
-                  <span className={styles.name}>{item.data?.Name?.trim() || 'Unnamed'}</span>
-                  <span className={styles.overviewText}>{overview || '—'}</span>
-                  <span className={styles.badge}>{count}/6</span>
-                  <span className={styles.date}>{formatDate(item.created_at)}</span>
+                <div className="flex items-center gap-2 text-sm min-w-0">
+                  <span className="font-semibold text-[#f5f0eb] max-w-[140px] sm:max-w-[100px] truncate shrink-0">
+                    {item.data?.Name?.trim() || 'Unnamed'}
+                  </span>
+                  <span className="flex-1 min-w-0 truncate text-muted">{overview || '—'}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-border text-muted shrink-0">{count}/6</span>
+                  <span className="text-muted text-xs shrink-0">{formatDate(item.created_at)}</span>
                   <button
                     type="button"
-                    className={styles.deleteBtn}
+                    className="w-6 h-6 p-0 rounded border-0 bg-transparent text-muted text-lg leading-none cursor-pointer shrink-0 flex items-center justify-center hover:text-error hover:bg-red-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={(e) => handleDeleteOne(e, item.id)}
                     disabled={!!deletingId}
                     title="Delete"
@@ -167,10 +165,15 @@ export function HistoryPage() {
                   >
                     {deletingId === item.id ? '…' : '×'}
                   </button>
-                  <span className={styles.chevron} aria-hidden>▼</span>
+                  <span
+                    className={`text-muted text-[0.6rem] shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    aria-hidden
+                  >
+                    ▼
+                  </span>
                 </div>
                 {isExpanded && (
-                  <div className={styles.cardBody}>
+                  <div className="mt-4 pt-4 border-t border-border flex flex-col gap-2">
                     {ALL_FIELDS.map(({ key, label }) => (
                       <Line key={key} label={label} value={item.data?.[key]} />
                     ))}

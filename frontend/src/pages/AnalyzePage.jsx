@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { analyzeLabels } from '../lib/api';
 import { compressAndToBase64 } from '../lib/compress';
 import { CameraCapture } from '../components/CameraCapture';
-import styles from './AnalyzePage.module.css';
 
 const FIELDS = ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country', 'DecodedText'];
 
@@ -178,134 +177,175 @@ export function AnalyzePage() {
   };
 
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>Analyse a wine label</h1>
-      <p className={styles.subtitle}>
+    <div className="w-full">
+      <h1 className="font-serif text-2xl sm:text-3xl font-semibold mb-2">Analyse a wine label</h1>
+      <p className="text-muted text-sm sm:text-base mb-8">
         Add both the front and back label images, then run the analysis. Drag and drop images, upload files, or capture with your camera.
       </p>
 
-      <div className={styles.slots}>
-        <div className={styles.slot}>
-          <span className={styles.slotLabel}>Front label</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+        <div className="flex flex-col gap-3">
+          <span className="font-semibold text-sm text-muted">Front label</span>
           <div
-            className={`${styles.preview} ${dragOver.front ? styles.previewDragOver : ''}`}
+            className={`relative aspect-[3/4] bg-surface border-2 border-dashed rounded-xl overflow-hidden flex items-center justify-center transition-colors ${dragOver.front ? 'border-accent bg-accent/10' : 'border-border'}`}
             onDragOver={(e) => handleDragOver(e, 'front')}
             onDragLeave={(e) => handleDragLeave(e, 'front')}
             onDrop={(e) => handleDrop(e, 'front')}
           >
             {frontImage ? (
               <>
-                <img src={frontImage.url} alt="Front label" />
-                <button type="button" className={styles.clearBtn} onClick={() => clearSlot('front')} aria-label="Remove">×</button>
+                <img src={frontImage.url} alt="Front label" className="w-full h-full object-contain" />
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full border-0 bg-black/60 text-white text-xl leading-none cursor-pointer flex items-center justify-center hover:bg-black/80"
+                  onClick={() => clearSlot('front')}
+                  aria-label="Remove"
+                >
+                  ×
+                </button>
               </>
             ) : (
-              <span className={styles.placeholder}>
+              <span className="text-muted text-sm flex flex-col items-center justify-center gap-1.5 text-center px-2">
                 {dragOver.front ? (
                   'Drop image here'
                 ) : (
                   <>
-                    <span>No image</span>
-                    <span className={styles.placeholderHint}>Drag & drop or use buttons below</span>
+                    <span className="font-semibold text-[0.95rem]">No image</span>
+                    <span className="text-xs opacity-90">Drag & drop or use buttons below</span>
                   </>
                 )}
               </span>
             )}
           </div>
-          <div className={styles.actions}>
+          <div className="flex flex-wrap gap-2">
             <input
               ref={frontInputRef}
               type="file"
               accept="image/*"
               onChange={(e) => handleUpload('front', e)}
+              className="hidden"
             />
-            <button type="button" onClick={() => frontInputRef.current?.click()}>Upload</button>
-            <button type="button" onClick={() => openCamera('front')}>Capture</button>
+            <button
+              type="button"
+              className="px-4 py-2 min-h-[44px] rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm hover:bg-border"
+              onClick={() => frontInputRef.current?.click()}
+            >
+              Upload
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 min-h-[44px] rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm hover:bg-border"
+              onClick={() => openCamera('front')}
+            >
+              Capture
+            </button>
           </div>
         </div>
 
-        <div className={styles.slot}>
-          <span className={styles.slotLabel}>Back label</span>
+        <div className="flex flex-col gap-3">
+          <span className="font-semibold text-sm text-muted">Back label</span>
           <div
-            className={`${styles.preview} ${dragOver.back ? styles.previewDragOver : ''}`}
+            className={`relative aspect-[3/4] bg-surface border-2 border-dashed rounded-xl overflow-hidden flex items-center justify-center transition-colors ${dragOver.back ? 'border-accent bg-accent/10' : 'border-border'}`}
             onDragOver={(e) => handleDragOver(e, 'back')}
             onDragLeave={(e) => handleDragLeave(e, 'back')}
             onDrop={(e) => handleDrop(e, 'back')}
           >
             {backImage ? (
               <>
-                <img src={backImage.url} alt="Back label" />
-                <button type="button" className={styles.clearBtn} onClick={() => clearSlot('back')} aria-label="Remove">×</button>
+                <img src={backImage.url} alt="Back label" className="w-full h-full object-contain" />
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full border-0 bg-black/60 text-white text-xl leading-none cursor-pointer flex items-center justify-center hover:bg-black/80"
+                  onClick={() => clearSlot('back')}
+                  aria-label="Remove"
+                >
+                  ×
+                </button>
               </>
             ) : (
-              <span className={styles.placeholder}>
+              <span className="text-muted text-sm flex flex-col items-center justify-center gap-1.5 text-center px-2">
                 {dragOver.back ? (
                   'Drop image here'
                 ) : (
                   <>
-                    <span>No image</span>
-                    <span className={styles.placeholderHint}>Drag & drop or use buttons below</span>
+                    <span className="font-semibold text-[0.95rem]">No image</span>
+                    <span className="text-xs opacity-90">Drag & drop or use buttons below</span>
                   </>
                 )}
               </span>
             )}
           </div>
-          <div className={styles.actions}>
+          <div className="flex flex-wrap gap-2">
             <input
               ref={backInputRef}
               type="file"
               accept="image/*"
               onChange={(e) => handleUpload('back', e)}
+              className="hidden"
             />
-            <button type="button" onClick={() => backInputRef.current?.click()}>Upload</button>
-            <button type="button" onClick={() => openCamera('back')}>Capture</button>
+            <button
+              type="button"
+              className="px-4 py-2 min-h-[44px] rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm hover:bg-border"
+              onClick={() => backInputRef.current?.click()}
+            >
+              Upload
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 min-h-[44px] rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm hover:bg-border"
+              onClick={() => openCamera('back')}
+            >
+              Capture
+            </button>
           </div>
         </div>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/10 text-error">{error}</div>
+      )}
 
-      <div className={styles.analyzeRow}>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-8">
         <button
           type="button"
-          className={styles.analyzeBtn}
+          className="px-6 py-3 rounded-xl border-0 bg-accent text-bg font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent-dim hover:enabled:text-[#f5f0eb] min-h-[48px] sm:min-h-0"
           disabled={!canAnalyze}
           onClick={runAnalysis}
         >
           {loading ? 'Analysing…' : 'Analyse labels'}
         </button>
         {!frontImage && !backImage && (
-          <span className={styles.hint}>Add both images to enable analysis.</span>
+          <span className="text-muted text-sm">Add both images to enable analysis.</span>
         )}
       </div>
 
       {cameraSlot && (
-        <CameraCapture
-          onCapture={onCameraCapture}
-          onClose={() => setCameraSlot(null)}
-        />
+        <CameraCapture onCapture={onCameraCapture} onClose={() => setCameraSlot(null)} />
       )}
 
       {result && (
-        <div className={styles.result}>
-          <h2>Extracted details</h2>
-          <dl className={styles.dl}>
+        <div className="bg-surface border border-border rounded-xl p-6">
+          <h2 className="text-xl font-semibold mb-4">Extracted details</h2>
+          <dl className="m-0 grid gap-3">
             {FIELDS.map((key) => (
-              <div key={key} className={styles.row}>
-                <dt>{key}</dt>
-                <dd>{result.data?.[key]?.trim() || '—'}</dd>
+              <div key={key} className="grid grid-cols-[140px_1fr] gap-4 items-baseline sm:grid-cols-1 sm:gap-1">
+                <dt className="m-0 font-medium text-muted text-sm">{key}</dt>
+                <dd className="m-0 text-base">{result.data?.[key]?.trim() || '—'}</dd>
               </div>
             ))}
           </dl>
-          <p className={styles.saved}>Saved to history. You can view it on the History page.</p>
+          <p className="mt-4 pt-4 border-t border-border text-success text-sm">
+            Saved to history. You can view it on the History page.
+          </p>
         </div>
       )}
 
-      <section className={styles.batch}>
-        <h2 className={styles.batchTitle}>Upload multiple wines</h2>
-        <p className={styles.batchSubtitle}>
+      <section className="mt-10 pt-6 border-t border-border">
+        <h2 className="text-lg font-semibold mb-1">Upload multiple wines</h2>
+        <p className="text-muted text-sm mb-4">
           Choose a folder or multiple files. Images must be in order: front, back, front, back, … (sorted by filename).
         </p>
-        <div className={styles.batchActions}>
+        <div className="flex flex-wrap gap-2">
           <input
             ref={folderInputRef}
             type="file"
@@ -313,7 +353,7 @@ export function AnalyzePage() {
             webkitdirectory=""
             multiple
             onChange={handleFolderOrMultiChange}
-            className={styles.hiddenInput}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
           />
           <input
             ref={multiInputRef}
@@ -321,25 +361,35 @@ export function AnalyzePage() {
             accept="image/*"
             multiple
             onChange={handleFolderOrMultiChange}
-            className={styles.hiddenInput}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
           />
-          <button type="button" className={styles.batchBtn} onClick={() => folderInputRef.current?.click()}>
+          <button
+            type="button"
+            className="px-4 py-2 rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm cursor-pointer hover:bg-border"
+            onClick={() => folderInputRef.current?.click()}
+          >
             Choose folder
           </button>
-          <button type="button" className={styles.batchBtn} onClick={() => multiInputRef.current?.click()}>
+          <button
+            type="button"
+            className="px-4 py-2 rounded-lg border border-border bg-surface text-[#f5f0eb] text-sm cursor-pointer hover:bg-border"
+            onClick={() => multiInputRef.current?.click()}
+          >
             Choose files
           </button>
         </div>
         {batchPairs.length > 0 && (
           <>
-            <ul className={styles.batchList}>
+            <ul className="list-none p-0 m-0 mt-4 mb-4 flex flex-col gap-1">
               {batchPairs.map((pair, i) => (
-                <li key={i} className={styles.batchItem}>
-                  <span className={styles.batchItemLabel}>Wine {i + 1}:</span>
-                  <span className={styles.batchItemFiles}>{pair[0].name}, {pair[1].name}</span>
+                <li key={i} className="flex items-center gap-2 text-sm py-1.5">
+                  <span className="text-muted shrink-0">Wine {i + 1}:</span>
+                  <span className="flex-1 min-w-0 truncate">
+                    {pair[0].name}, {pair[1].name}
+                  </span>
                   <button
                     type="button"
-                    className={styles.batchRemoveBtn}
+                    className="w-6 h-6 p-0 rounded border-0 bg-transparent text-muted text-lg leading-none cursor-pointer shrink-0 flex items-center justify-center hover:text-error hover:bg-red-500/10"
                     onClick={() => removeBatchPair(i)}
                     aria-label="Remove"
                   >
@@ -348,10 +398,10 @@ export function AnalyzePage() {
                 </li>
               ))}
             </ul>
-            <div className={styles.batchAnalyzeRow}>
+            <div className="mb-2">
               <button
                 type="button"
-                className={styles.analyzeBtn}
+                className="px-6 py-3 rounded-xl border-0 bg-accent text-bg font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-accent-dim hover:enabled:text-[#f5f0eb]"
                 disabled={!canBatchAnalyze}
                 onClick={runBatchAnalysis}
               >
@@ -363,7 +413,7 @@ export function AnalyzePage() {
           </>
         )}
         {batchDone && (
-          <p className={styles.batchDone}>
+          <p className="text-success text-sm m-0">
             {batchDone.done} wine{batchDone.done !== 1 ? 's' : ''} saved to history.
             {batchDone.failed > 0 && ` ${batchDone.failed} failed.`}
           </p>
