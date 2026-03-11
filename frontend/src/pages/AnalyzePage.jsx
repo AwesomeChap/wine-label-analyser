@@ -52,6 +52,15 @@ export function AnalyzePage() {
 
   useEffect(() => {
     if (showPromptEditor) {
+      if (!promptText && defaultPrompt) setPromptText(defaultPrompt);
+      if (!promptText && !defaultPrompt) {
+        getDefaultPrompt()
+          .then((p) => {
+            setDefaultPrompt(p);
+            setPromptText(p);
+          })
+          .catch(() => {});
+      }
       const t = requestAnimationFrame(() => setPromptModalMounted(true));
       return () => cancelAnimationFrame(t);
     }
