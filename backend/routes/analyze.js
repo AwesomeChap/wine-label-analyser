@@ -67,6 +67,11 @@ analyzeRouter.post('/', async (req, res) => {
     const { data: frontUrl } = supabase.storage.from(bucketName).getPublicUrl(frontPath);
     const { data: backUrl } = supabase.storage.from(bucketName).getPublicUrl(backPath);
 
+    const promptUsed =
+      typeof customPrompt === 'string' && customPrompt.trim()
+        ? customPrompt.trim()
+        : DEFAULT_EXTRACTION_PROMPT;
+
     const extracted = await extractWineLabelData(frontImage, backImage, customPrompt);
 
     const row = {
@@ -78,6 +83,7 @@ analyzeRouter.post('/', async (req, res) => {
       vineyard_location: extracted['Vineyard Location'] ?? '',
       country: extracted.Country ?? '',
       decoded_text: extracted.DecodedText ?? '',
+      extraction_prompt: promptUsed,
       front_image_url: frontUrl.publicUrl,
       back_image_url: backUrl.publicUrl,
     };

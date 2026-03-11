@@ -483,7 +483,7 @@ export function AnalyzePage() {
           <dl className="m-0 grid gap-3 sm:grid-cols-[auto_1fr] sm:gap-x-6 gap-y-2">
             {FIELDS.map((key) => (
               <div key={key} className="contents">
-                <dt className="m-0 font-medium text-muted text-sm pt-0.5">{key}</dt>
+                <dt className="m-0 font-medium text-muted text-sm pt-0.5">{FIELD_LABELS[key] ?? key}</dt>
                 <dd className="m-0 text-[#f5f0eb] text-sm sm:text-base">
                   {result.data?.[key]?.trim() || '—'}
                 </dd>

@@ -25,6 +25,7 @@ historyRouter.get('/', async (req, res) => {
       created_at: row.created_at,
       frontImageUrl: row.front_image_url,
       backImageUrl: row.back_image_url,
+      extractionPrompt: row.extraction_prompt ?? null,
       data: {
         Name: row.name ?? '',
         Winery: row.winery ?? '',

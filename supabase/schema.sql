@@ -12,7 +12,8 @@ create table if not exists public.wine_analyses (
   country text,
   front_image_url text,
   back_image_url text,
-  decoded_text text
+  decoded_text text,
+  extraction_prompt text
 );
 
 -- If table already exists, add the new column with:

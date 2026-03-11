@@ -24,14 +24,14 @@ function getExtractedCount(data) {
   return KEY_FIELDS.filter((f) => data?.[f.key]?.trim()).length;
 }
 
-function Line({ label, value }) {
+function Line({ label, value, preWrap }) {
   const v = value?.trim();
-  const isDecoded = label === 'Decoded text';
+  const usePreWrap = preWrap ?? (label === 'Extracted text' || label === 'Extraction prompt');
   return (
     <div className="grid grid-cols-[120px_1fr] gap-2 items-start text-sm sm:grid-cols-1 sm:gap-0.5">
       <span className="text-muted/90 shrink-0 text-xs font-medium uppercase tracking-wider">{label}</span>
       <span
-        className={`text-[#f5f0eb] break-words ${isDecoded ? 'whitespace-pre-wrap text-[0.85rem] leading-relaxed' : ''}`}
+        className={`text-[#f5f0eb] break-words ${usePreWrap ? 'whitespace-pre-wrap text-[0.85rem] leading-relaxed' : ''}`}
       >
         {v || '—'}
       </span>
@@ -202,6 +202,7 @@ export function HistoryPage() {
                     {ALL_FIELDS.map(({ key, label }) => (
                       <Line key={key} label={label} value={item.data?.[key]} />
                     ))}
+                    <Line label="Extraction prompt" value={item.extractionPrompt ?? ''} />
                   </div>
                 )}
               </li>
