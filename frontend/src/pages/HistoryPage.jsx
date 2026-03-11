@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getHistory } from '../lib/api';
+import { getHistory, deleteWine, deleteAllWines } from '../lib/api';
 import styles from './HistoryPage.module.css';
 
-const DATA_FIELDS = ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country'];
+const KEY_FIELDS = [
+  { key: 'Name', label: 'Name' },
+  { key: 'Winery', label: 'Winery' },
+  { key: 'Vintage', label: 'Vintage' },
+  { key: 'Grape Variety', label: 'Grape variety' },
+  { key: 'Vineyard Location', label: 'Vineyard location' },
+  { key: 'Country', label: 'Country' },
+];
+
+const ALL_FIELDS = [...KEY_FIELDS, { key: 'DecodedText', label: 'Decoded text' }];
 
 function formatDate(iso) {
   try {
@@ -12,23 +21,24 @@ function formatDate(iso) {
   }
 }
 
-function Summary({ item }) {
-  const present = DATA_FIELDS.filter((k) => item.data?.[k]?.trim()).map((k) => item.data[k].trim());
-  const count = DATA_FIELDS.filter((k) => item.fields[k]).length;
-  return (
-    <span className={styles.summary}>
-      {present.length ? present.join(' · ') : '—'}
-      <span className={styles.badge}>{count}/{DATA_FIELDS.length}</span>
-    </span>
-  );
+function getExtractedCount(data) {
+  return KEY_FIELDS.filter((f) => data?.[f.key]?.trim()).length;
 }
 
-function DetailRow({ label, hasValue, value }) {
+function Line({ label, value }) {
+  const v = value?.trim();
+  if (label === 'Decoded text') {
+    return (
+      <div className={styles.line}>
+        <span className={styles.lineLabel}>{label}</span>
+        <span className={styles.lineValueDecoded}>{v || '—'}</span>
+      </div>
+    );
+  }
   return (
-    <div className={styles.detailRow}>
-      <span className={styles.detailLabel}>{label}</span>
-      <span className={hasValue ? styles.detailOk : styles.detailMissing}>{hasValue ? '✓' : '—'}</span>
-      <span className={styles.detailValue}>{hasValue && value != null ? value : '—'}</span>
+    <div className={styles.line}>
+      <span className={styles.lineLabel}>{label}</span>
+      <span className={styles.lineValue}>{v || '—'}</span>
     </div>
   );
 }
@@ -38,13 +48,47 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  useEffect(() => {
+  const loadHistory = () => {
     getHistory()
       .then((res) => setItems(res.items || []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadHistory();
   }, []);
+
+  const handleDeleteOne = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this wine from history?')) return;
+    setDeletingId(id);
+    try {
+      await deleteWine(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      if (expandedId === id) setExpandedId(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm('Delete all wines from history? This cannot be undone.')) return;
+    setDeletingId('all');
+    try {
+      await deleteAllWines();
+      setItems([]);
+      setExpandedId(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -66,8 +110,22 @@ export function HistoryPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>History</h1>
-      <p className={styles.subtitle}>Analysed wine bottles and extracted details.</p>
+      <div className={styles.pageHead}>
+        <div>
+          <h1 className={styles.title}>History</h1>
+          <p className={styles.subtitle}>Analysed wine bottles. Click a card to expand.</p>
+        </div>
+        {items.length > 0 && (
+          <button
+            type="button"
+            className={styles.deleteAllBtn}
+            onClick={handleDeleteAll}
+            disabled={!!deletingId}
+          >
+            {deletingId === 'all' ? 'Deleting…' : 'Delete all'}
+          </button>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <p className={styles.empty}>No analyses yet. Analyse a label on the Analyse page.</p>
@@ -75,6 +133,10 @@ export function HistoryPage() {
         <ul className={styles.list}>
           {items.map((item) => {
             const isExpanded = expandedId === item.id;
+            const count = getExtractedCount(item.data);
+            const overview = KEY_FIELDS.filter((f) => item.data?.[f.key]?.trim())
+              .map((f) => item.data[f.key].trim())
+              .join(' · ');
             return (
               <li
                 key={item.id}
@@ -91,51 +153,26 @@ export function HistoryPage() {
                 aria-expanded={isExpanded}
               >
                 <div className={styles.cardRow}>
-                  <div className={styles.thumbs}>
-                    {item.frontImageUrl ? (
-                      <img src={item.frontImageUrl} alt="Front" />
-                    ) : (
-                      <span className={styles.noImg}>F</span>
-                    )}
-                    {item.backImageUrl ? (
-                      <img src={item.backImageUrl} alt="Back" />
-                    ) : (
-                      <span className={styles.noImg}>B</span>
-                    )}
-                  </div>
-                  <div className={styles.main}>
-                    <div className={styles.name}>
-                      {item.data?.Name?.trim() || 'Unnamed'}
-                    </div>
-                    <div className={styles.meta}>
-                      <Summary item={item} />
-                    </div>
-                  </div>
-                  <div className={styles.cardRight}>
-                    <span className={styles.date}>{formatDate(item.created_at)}</span>
-                    <span className={styles.chevron} aria-hidden>▼</span>
-                  </div>
+                  <span className={styles.name}>{item.data?.Name?.trim() || 'Unnamed'}</span>
+                  <span className={styles.overviewText}>{overview || '—'}</span>
+                  <span className={styles.badge}>{count}/6</span>
+                  <span className={styles.date}>{formatDate(item.created_at)}</span>
+                  <button
+                    type="button"
+                    className={styles.deleteBtn}
+                    onClick={(e) => handleDeleteOne(e, item.id)}
+                    disabled={!!deletingId}
+                    title="Delete"
+                    aria-label="Delete this wine"
+                  >
+                    {deletingId === item.id ? '…' : '×'}
+                  </button>
+                  <span className={styles.chevron} aria-hidden>▼</span>
                 </div>
                 {isExpanded && (
-                  <div className={styles.details}>
-                    <div className={styles.detailsTitle}>Extracted details</div>
-                    <DetailRow
-                      label="Front Image"
-                      hasValue={!!item.frontImageUrl}
-                      value={item.frontImageUrl ? 'Yes' : null}
-                    />
-                    <DetailRow
-                      label="Back Image"
-                      hasValue={!!item.backImageUrl}
-                      value={item.backImageUrl ? 'Yes' : null}
-                    />
-                    {DATA_FIELDS.map((key) => (
-                      <DetailRow
-                        key={key}
-                        label={key}
-                        hasValue={!!item.fields[key]}
-                        value={item.data?.[key]?.trim()}
-                      />
+                  <div className={styles.cardBody}>
+                    {ALL_FIELDS.map(({ key, label }) => (
+                      <Line key={key} label={label} value={item.data?.[key]} />
                     ))}
                   </div>
                 )}

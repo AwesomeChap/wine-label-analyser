@@ -2,6 +2,8 @@
 
 A full-stack web app that analyses wine labels from photos of the front and back of a bottle. Users can upload images or capture them with the camera. The app uses OpenAI to extract structured data (name, winery, vintage, grape variety, vineyard location, country) and stores results and compressed images in Supabase.
 
+**Live demo:** [https://wine-label-analyser.vercel.app/](https://wine-label-analyser.vercel.app/)
+
 ## Requirements
 
 - Node.js 18+
@@ -48,7 +50,7 @@ Never commit `.env` or `.env.local`; they are in `.gitignore`.
 ### 3. Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the **SQL Editor**, run the script in `supabase/schema.sql` to create the `wine_analyses` table and RLS policy.
+2. In the **SQL Editor**, run the script in `supabase/schema.sql` to create the `wine_analyses` table and RLS policy. If the table was created before `decoded_text` was added, run `supabase/add_decoded_text.sql` to add the column.
 3. In **Storage**, create a bucket named `wine-labels` (or the name you set in `SUPABASE_BUCKET_NAME`). Make it **public** so the app can display stored label images via public URLs.
 
 ### 4. Run the app
@@ -113,7 +115,7 @@ git push -u origin main
 
 ### 4. Check the deployment
 
-- Your app will be at `https://your-project.vercel.app`.
+- This project is deployed at [https://wine-label-analyser.vercel.app/](https://wine-label-analyser.vercel.app/). Your own deployment will be at `https://your-project.vercel.app`.
 - The frontend is served from the root; the API is at `/api/analyze`, `/api/history`, and `/api/health`.
 - No need to set `VITE_API_BASE_URL`; the frontend uses the same origin in production.
 

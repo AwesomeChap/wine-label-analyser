@@ -4,7 +4,7 @@ import { compressAndToBase64 } from '../lib/compress';
 import { CameraCapture } from '../components/CameraCapture';
 import styles from './AnalyzePage.module.css';
 
-const FIELDS = ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country'];
+const FIELDS = ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country', 'DecodedText'];
 
 export function AnalyzePage() {
   const [frontImage, setFrontImage] = useState(null);

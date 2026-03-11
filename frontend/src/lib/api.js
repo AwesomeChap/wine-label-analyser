@@ -24,3 +24,19 @@ export async function getHistory() {
   }
   return res.json();
 }
+
+export async function deleteWine(id) {
+  const res = await fetch(`${API_BASE}/api/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || res.statusText || 'Delete failed');
+  }
+}
+
+export async function deleteAllWines() {
+  const res = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || res.statusText || 'Delete all failed');
+  }
+}

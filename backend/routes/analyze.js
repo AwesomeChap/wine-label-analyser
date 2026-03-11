@@ -69,6 +69,7 @@ analyzeRouter.post('/', async (req, res) => {
       grape_variety: extracted['Grape Variety'] ?? '',
       vineyard_location: extracted['Vineyard Location'] ?? '',
       country: extracted.Country ?? '',
+      decoded_text: extracted.DecodedText ?? '',
       front_image_url: frontUrl.publicUrl,
       back_image_url: backUrl.publicUrl,
     };
@@ -85,6 +86,7 @@ analyzeRouter.post('/', async (req, res) => {
         'Grape Variety': row.grape_variety,
         'Vineyard Location': row.vineyard_location,
         Country: row.country,
+        DecodedText: row.decoded_text ?? '',
       },
       frontImageUrl: row.front_image_url,
       backImageUrl: row.back_image_url,

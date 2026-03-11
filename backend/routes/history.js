@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase.js';
+import { supabase, bucketName } from '../lib/supabase.js';
 
 export const historyRouter = Router();
 
@@ -25,16 +25,6 @@ historyRouter.get('/', async (req, res) => {
       created_at: row.created_at,
       frontImageUrl: row.front_image_url,
       backImageUrl: row.back_image_url,
-      fields: {
-        'Front Image': !!row.front_image_url,
-        'Back Image': !!row.back_image_url,
-        Name: !!row.name?.trim(),
-        Winery: !!row.winery?.trim(),
-        Vintage: !!row.vintage?.trim(),
-        'Grape Variety': !!row.grape_variety?.trim(),
-        'Vineyard Location': !!row.vineyard_location?.trim(),
-        Country: !!row.country?.trim(),
-      },
       data: {
         Name: row.name ?? '',
         Winery: row.winery ?? '',
@@ -42,6 +32,7 @@ historyRouter.get('/', async (req, res) => {
         'Grape Variety': row.grape_variety ?? '',
         'Vineyard Location': row.vineyard_location ?? '',
         Country: row.country ?? '',
+        DecodedText: row.decoded_text ?? '',
       },
     }));
 
@@ -51,5 +42,50 @@ historyRouter.get('/', async (req, res) => {
     res.status(500).json({
       error: err.message || 'Failed to load history.',
     });
+  }
+});
+
+/**
+ * DELETE /api/history/:id
+ * Deletes one wine analysis and its storage images.
+ */
+historyRouter.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'Missing id.' });
+    if (!supabase) return res.status(500).json({ error: 'Supabase not configured.' });
+
+    const { error: deleteError } = await supabase.from('wine_analyses').delete().eq('id', id);
+    if (deleteError) throw deleteError;
+
+    if (bucketName) {
+      await supabase.storage.from(bucketName).remove([`${id}/front.jpg`, `${id}/back.jpg`]);
+    }
+    res.status(204).send();
+  } catch (err) {
+    console.error('History delete error:', err);
+    res.status(500).json({ error: err.message || 'Delete failed.' });
+  }
+});
+
+/**
+ * DELETE /api/history
+ * Deletes all wine analyses. Optional: remove all objects from bucket (list by prefix is per-id).
+ */
+historyRouter.delete('/', async (req, res) => {
+  try {
+    if (!supabase) return res.status(500).json({ error: 'Supabase not configured.' });
+
+    const { data: rows } = await supabase.from('wine_analyses').select('id');
+    if (rows?.length && bucketName) {
+      const paths = rows.flatMap((r) => [`${r.id}/front.jpg`, `${r.id}/back.jpg`]);
+      await supabase.storage.from(bucketName).remove(paths);
+    }
+    const { error } = await supabase.from('wine_analyses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+    res.status(204).send();
+  } catch (err) {
+    console.error('History delete all error:', err);
+    res.status(500).json({ error: err.message || 'Delete all failed.' });
   }
 });

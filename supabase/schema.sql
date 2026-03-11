@@ -11,8 +11,12 @@ create table if not exists public.wine_analyses (
   vineyard_location text,
   country text,
   front_image_url text,
-  back_image_url text
+  back_image_url text,
+  decoded_text text
 );
+
+-- If table already exists, add the new column with:
+-- alter table public.wine_analyses add column if not exists decoded_text text;
 
 -- Enable RLS (optional; use service role key in backend to bypass)
 alter table public.wine_analyses enable row level security;

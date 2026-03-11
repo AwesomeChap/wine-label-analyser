@@ -18,8 +18,9 @@ const EXTRACTION_SCHEMA = {
         'Grape Variety': { type: 'string', description: 'Grape variety or varieties' },
         'Vineyard Location': { type: 'string', description: 'Vineyard or region location' },
         Country: { type: 'string', description: 'Country of origin' },
+        DecodedText: { type: 'string', description: 'Overall text read from both labels combined, as it appears' },
       },
-      required: ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country'],
+      required: ['Name', 'Winery', 'Vintage', 'Grape Variety', 'Vineyard Location', 'Country', 'DecodedText'],
       additionalProperties: false,
     },
   },
@@ -36,7 +37,7 @@ export async function extractWineLabelData(frontBase64, backBase64) {
   const content = [
     {
       type: 'text',
-      text: `You are a wine label expert. Analyze the TWO images provided: the first is the FRONT label of a wine bottle, the second is the BACK label. Extract the following fields. Use empty string "" if not found or not visible. Return valid JSON only with these exact keys: Name, Winery, Vintage, Grape Variety, Vineyard Location, Country.`,
+      text: `You are a wine label expert. Analyze the TWO images provided: the first is the FRONT label of a wine bottle, the second is the BACK label. Extract the structured fields (Name, Winery, Vintage, Grape Variety, Vineyard Location, Country). Also provide DecodedText: the main text content read from both labels combined, in reading order (front then back), as it appears on the labels. Use empty string "" if not found. Return valid JSON with keys: Name, Winery, Vintage, Grape Variety, Vineyard Location, Country, DecodedText.`,
     },
     {
       type: 'image_url',
@@ -52,7 +53,7 @@ export async function extractWineLabelData(frontBase64, backBase64) {
     model: 'gpt-4o',
     messages: [{ role: 'user', content }],
     response_format: EXTRACTION_SCHEMA,
-    max_tokens: 500,
+    max_tokens: 1000,
   });
 
   const raw = response.choices[0]?.message?.content;
