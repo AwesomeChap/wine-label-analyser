@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getHistory, deleteWine, deleteAllWines } from '../lib/api';
+import { getHistory, deleteWine, deleteAllWines, reanalyseWine } from '../lib/api';
 
 const KEY_FIELDS = [
   { key: 'Name', label: 'Name' },
@@ -39,6 +39,15 @@ function Line({ label, value, preWrap }) {
   );
 }
 
+function SkeletonLine({ label }) {
+  return (
+    <div className="grid grid-cols-[120px_1fr] gap-2 items-center text-sm sm:grid-cols-1 sm:gap-1">
+      <span className="text-muted/90 shrink-0 text-xs font-medium uppercase tracking-wider">{label}</span>
+      <span className="h-4 w-full max-w-[200px] rounded bg-white/10 animate-pulse" aria-hidden />
+    </div>
+  );
+}
+
 export function HistoryPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +58,18 @@ export function HistoryPage() {
   const [imagesModalClosing, setImagesModalClosing] = useState(false);
   const [imagesModalMounted, setImagesModalMounted] = useState(false);
   const IMAGES_MODAL_DURATION_MS = 200;
+  const [editedPrompt, setEditedPrompt] = useState('');
+  const [reAnalyzingId, setReAnalyzingId] = useState(null);
+  const [editingPromptId, setEditingPromptId] = useState(null);
+
+  useEffect(() => {
+    const item = items.find((i) => i.id === expandedId);
+    setEditedPrompt(item?.extractionPrompt ?? '');
+  }, [expandedId, items]);
+
+  useEffect(() => {
+    if (expandedId !== editingPromptId) setEditingPromptId(null);
+  }, [expandedId]);
 
   const loadHistory = () => {
     getHistory()
@@ -75,6 +96,21 @@ export function HistoryPage() {
       setViewingImagesId(null);
       setImagesModalClosing(false);
     }, IMAGES_MODAL_DURATION_MS);
+  };
+
+  const handleReAnalyze = async (e, item) => {
+    e.stopPropagation();
+    const prompt = typeof editedPrompt === 'string' ? editedPrompt.trim() : '';
+    setReAnalyzingId(item.id);
+    setError(null);
+    try {
+      await reanalyseWine(item.id, prompt || undefined);
+      await loadHistory();
+    } catch (err) {
+      setError(err.message || 'Re-analysis failed.');
+    } finally {
+      setReAnalyzingId(null);
+    }
   };
 
   const handleDeleteOne = async (e, id) => {
@@ -202,13 +238,22 @@ export function HistoryPage() {
                   <span className="text-muted/80 text-xs shrink-0">{formatDate(item.created_at)}</span>
                   <button
                     type="button"
-                    className="w-7 h-7 rounded-lg border-0 bg-transparent text-muted/80 hover:text-error hover:bg-red-500/10 flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-lg leading-none"
+                    className="w-7 h-7 rounded-lg border-0 bg-transparent text-muted/80 hover:text-error hover:bg-red-500/10 flex items-center justify-center shrink-0 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={(e) => handleDeleteOne(e, item.id)}
                     disabled={!!deletingId}
                     title="Delete"
                     aria-label="Delete this wine"
                   >
-                    {deletingId === item.id ? '…' : '×'}
+                    {deletingId === item.id ? (
+                      <span className="text-sm">…</span>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    )}
                   </button>
                   <span
                     className={`text-muted/70 text-[0.6rem] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
@@ -218,7 +263,11 @@ export function HistoryPage() {
                   </span>
                 </div>
                 {isExpanded && (
-                  <div className="px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4 relative">
+                  <div
+                    className="px-4 py-4 sm:px-5 border-t border-white/5 flex flex-col gap-4 relative cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     {(item.frontImageUrl || item.backImageUrl) && (
                       <button
                         type="button"
@@ -232,10 +281,94 @@ export function HistoryPage() {
                         View images
                       </button>
                     )}
-                    {ALL_FIELDS.map(({ key, label }) => (
-                      <Line key={key} label={label} value={item.data?.[key]} />
-                    ))}
-                    <Line label="Extraction prompt" value={item.extractionPrompt ?? ''} />
+                    {reAnalyzingId === item.id ? (
+                      <>
+                        {ALL_FIELDS.map(({ key, label }) => (
+                          <SkeletonLine key={key} label={label} />
+                        ))}
+                        <Line label="Extraction prompt" value={editedPrompt ?? ''} />
+                        <p className="text-muted text-xs mt-1" aria-live="polite">
+                          Re-analysing…
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        {ALL_FIELDS.map(({ key, label }) => (
+                          <Line key={key} label={label} value={item.data?.[key]} />
+                        ))}
+                        {editingPromptId === item.id ? (
+                      <div className="grid grid-cols-[120px_1fr] gap-3 items-start text-sm sm:grid-cols-1 sm:gap-1">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-muted/90 text-xs font-medium uppercase tracking-wider">
+                            Extraction prompt
+                          </span>
+                          <button
+                            type="button"
+                            className="p-1 rounded text-muted/80 hover:text-[#f5f0eb] hover:bg-white/5 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingPromptId(null);
+                              setEditedPrompt(item.extractionPrompt ?? '');
+                            }}
+                            aria-label="Close edit"
+                            title="Close"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18" />
+                              <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-4 min-w-0">
+                          <textarea
+                            value={editedPrompt}
+                            onChange={(e) => setEditedPrompt(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            rows={4}
+                            className="w-full px-3 py-2 rounded-lg border border-white/10 bg-bg/80 text-[#f5f0eb] text-[0.85rem] font-mono resize-y focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50 placeholder:text-muted/60"
+                            placeholder="Extraction prompt used for this analysis..."
+                            spellCheck={false}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-[120px_1fr] gap-3 items-start text-sm sm:grid-cols-1 sm:gap-1">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-muted/90 text-xs font-medium uppercase tracking-wider">
+                            Extraction prompt
+                          </span>
+                          <button
+                            type="button"
+                            className="p-1 rounded text-muted/80 hover:text-accent hover:bg-white/5 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingPromptId(item.id);
+                              setEditedPrompt(item.extractionPrompt ?? '');
+                            }}
+                            aria-label="Edit extraction prompt"
+                            title="Edit prompt"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                        </div>
+                        <span className="text-[#f5f0eb] break-words whitespace-pre-wrap text-[0.85rem] leading-relaxed">
+                          {item.extractionPrompt?.trim() || '—'}
+                        </span>
+                      </div>
+                    )}
+                        <button
+                          type="button"
+                          className="self-start px-3 py-1.5 rounded-lg text-xs font-medium bg-accent/20 text-accent border border-accent/40 hover:bg-accent/30 hover:border-accent/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-accent/20 disabled:hover:border-accent/40 mt-1"
+                          disabled={reAnalyzingId === item.id}
+                          onClick={(e) => handleReAnalyze(e, item)}
+                        >
+                          {reAnalyzingId === item.id ? 'Re-analysing…' : 'Re-analyse'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </li>

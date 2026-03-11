@@ -31,6 +31,25 @@ export async function getHistory() {
   return res.json();
 }
 
+/**
+ * Re-run extraction on an existing history item. Updates that row only (no new item).
+ * @param {string} id - wine_analyses id
+ * @param {string} [prompt] - optional extraction prompt; if omitted, backend uses existing
+ */
+export async function reanalyseWine(id, prompt) {
+  const body = typeof prompt === 'string' && prompt.trim() ? { prompt: prompt.trim() } : {};
+  const res = await fetch(`${API_BASE}/api/history/${encodeURIComponent(id)}/reanalyse`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || res.statusText || 'Re-analysis failed');
+  }
+  return res.json();
+}
+
 export async function deleteWine(id) {
   const res = await fetch(`${API_BASE}/api/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
   if (!res.ok) {
