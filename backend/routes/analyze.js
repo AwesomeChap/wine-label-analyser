@@ -1,18 +1,26 @@
 import { Router } from 'express';
-import { extractWineLabelData } from '../lib/openai.js';
+import { extractWineLabelData, DEFAULT_EXTRACTION_PROMPT } from '../lib/openai.js';
 import { supabase, bucketName } from '../lib/supabase.js';
 import { compressImage } from '../lib/compress.js';
 
 export const analyzeRouter = Router();
 
 /**
+ * GET /api/analyze/prompt
+ * Returns the default extraction prompt (for reset / display).
+ */
+analyzeRouter.get('/prompt', (_, res) => {
+  res.json({ prompt: DEFAULT_EXTRACTION_PROMPT });
+});
+
+/**
  * POST /api/analyze
- * Body: { frontImage: base64, backImage: base64 }
- * Both required. Compresses images, uploads to Supabase, runs OpenAI, saves record.
+ * Body: { frontImage: base64, backImage: base64, prompt?: string }
+ * frontImage and backImage required. Optional prompt overrides the extraction prompt.
  */
 analyzeRouter.post('/', async (req, res) => {
   try {
-    const { frontImage, backImage } = req.body || {};
+    const { frontImage, backImage, prompt: customPrompt } = req.body || {};
     if (!frontImage || !backImage) {
       return res.status(400).json({
         error: 'Both frontImage and backImage (base64) are required.',
@@ -59,7 +67,7 @@ analyzeRouter.post('/', async (req, res) => {
     const { data: frontUrl } = supabase.storage.from(bucketName).getPublicUrl(frontPath);
     const { data: backUrl } = supabase.storage.from(bucketName).getPublicUrl(backPath);
 
-    const extracted = await extractWineLabelData(frontImage, backImage);
+    const extracted = await extractWineLabelData(frontImage, backImage, customPrompt);
 
     const row = {
       id,

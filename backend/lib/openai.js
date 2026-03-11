@@ -26,18 +26,22 @@ const EXTRACTION_SCHEMA = {
   },
 };
 
+export const DEFAULT_EXTRACTION_PROMPT = `You are a wine label expert. Analyze the TWO images provided: the first is the FRONT label of a wine bottle, the second is the BACK label. Extract the structured fields (Name, Winery, Vintage, Grape Variety, Vineyard Location, Country). Also provide DecodedText: the main text content read from both labels combined, in reading order (front then back), as it appears on the labels. Use empty string "" if not found. Return valid JSON with keys: Name, Winery, Vintage, Grape Variety, Vineyard Location, Country, DecodedText.`;
+
 /**
  * @param {string} frontBase64 - base64 image (with or without data URL prefix)
  * @param {string} backBase64 - base64 image
- * @returns {Promise<{Name:string,Winery:string,Vintage:string,'Grape Variety':string,'Vineyard Location':string,Country:string}>}
+ * @param {string} [customPrompt] - optional prompt; if not provided or empty, uses DEFAULT_EXTRACTION_PROMPT
+ * @returns {Promise<{Name:string,Winery:string,Vintage:string,'Grape Variety':string,'Vineyard Location':string,Country:string,DecodedText:string}>}
  */
-export async function extractWineLabelData(frontBase64, backBase64) {
+export async function extractWineLabelData(frontBase64, backBase64, customPrompt) {
   const clean = (b) => (b.replace(/^data:image\/\w+;base64,/, ''));
+  const promptText = (typeof customPrompt === 'string' && customPrompt.trim()) ? customPrompt.trim() : DEFAULT_EXTRACTION_PROMPT;
 
   const content = [
     {
       type: 'text',
-      text: `You are a wine label expert. Analyze the TWO images provided: the first is the FRONT label of a wine bottle, the second is the BACK label. Extract the structured fields (Name, Winery, Vintage, Grape Variety, Vineyard Location, Country). Also provide DecodedText: the main text content read from both labels combined, in reading order (front then back), as it appears on the labels. Use empty string "" if not found. Return valid JSON with keys: Name, Winery, Vintage, Grape Variety, Vineyard Location, Country, DecodedText.`,
+      text: promptText,
     },
     {
       type: 'image_url',
